@@ -5,11 +5,17 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"fmt"
+	"gator/internal/database"
 )
 
 type Config struct {
 	DBUrl string
 	CurrentUserName string
+}
+
+type State struct {
+	DB  *database.Queries
+	Cfg *Config
 }
 
 func GetConfigFilePath() string {
@@ -62,6 +68,7 @@ func (cfg *Config) SetUser(username string, configFilePath string) error {
 	if err := os.WriteFile(configFilePath, data, 0644); err != nil {
 		return fmt.Errorf("writing config file: %w", err)
 	}
+	fmt.Printf("User '%s' logged in successfully.\n", username)
 
 	return nil
 }
