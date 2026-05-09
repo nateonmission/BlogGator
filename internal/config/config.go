@@ -1,3 +1,4 @@
+// /internal/config/config.go
 package config
 
 import (
@@ -5,17 +6,11 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"fmt"
-	"gator/internal/database"
 )
 
 type Config struct {
-	DBUrl string
-	CurrentUserName string
-}
-
-type State struct {
-	DB  *database.Queries
-	Cfg *Config
+	DBURL string `json:"DBURL"`
+	CurrentUserName string `json:"CurrentUserName"`
 }
 
 func GetConfigFilePath() string {

@@ -1,16 +1,20 @@
+// main.go
 package main
 
 import _ "github.com/lib/pq"
 import (
 	"fmt"
-	"gator/internal/config"
 	"os"
+	"database/sql"
+	"gator/internal/config"
+	"gator/internal/database"
 
 )
 
 
 func main(){
 	// username := "natedawg"
+
 	configFilePath := config.GetConfigFilePath()
 
 	cfg, err := config.Read(configFilePath)
@@ -18,20 +22,33 @@ func main(){
 		fmt.Printf("Error reading config: %v\n", err)
 		return
 	}
-	s := config.State{Cfg: &cfg}
 
-	cmds := &config.Commands{}
-	cmds.Register("login", config.HandlerLogin)
+	db, err := sql.Open("postgres", cfg.DBURL)
+	if err != nil {
+		fmt.Printf("Error connecting to database: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("PSQL = %s\n", cfg.DBURL)
+	defer db.Close()
+
+	dbQueries := database.New(db)
+	s := state{db: dbQueries, cfg: &cfg}
+
+	cmds := &commands{}
+	cmds.Register("login", handlerLogin)
+	cmds.Register("register", handlerRegister)
+	cmds.Register("reset", handlerReset)
+	cmds.Register("users", handlerListUsers)
 	
 	args := os.Args[1:]
-	if len(args) < 2 {
+	if len(args) < 1 {
 		fmt.Printf("usage: %s <command> [args...]\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	 cmd := config.Command{
-		Name: args[0],
-		Args: args[1:],
+	 cmd := command{
+		name: args[0],
+		args: args[1:],
 	}
 	if err := cmds.Run(&s, cmd); err != nil {
 		fmt.Printf("error: %v\n", err)
