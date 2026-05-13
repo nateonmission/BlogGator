@@ -111,3 +111,68 @@ func handlerListUsers(s *state, cmd command) error {
 	}
 	return nil
 }
+
+
+func handlerAgg(s *state, cmd command) error {
+	fmt.Printf("Running aggregate command: %s with args: %v\n", cmd.name, cmd.args)
+	// rssFeed, err := fetchFeed(context.Background(), cmd.args[0])
+	rssFeed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return fmt.Errorf("error fetching feed: %v\n", err)
+	}
+	fmt.Printf("Fetched feed: %+v\n", rssFeed)
+
+	return nil
+}	
+
+func handlerAddFeed(s *state, cmd command) error {
+	fmt.Printf("Running addfeed command: %s", cmd.name)
+	if len(cmd.args) < 2 {
+		return fmt.Errorf("usage: addfeed <feed_name> <feed_url>\n")
+	}
+
+	var feedName string = cmd.args[0]
+	var feedURL string = cmd.args[1]
+
+	ctx := context.Background()
+
+	user, err := s.db.GetUserByName(ctx, s.cfg.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("error fetching user: %v\n", err)
+	}
+	
+	params := database.CreateFeedParams{
+		Name: feedName,
+		Url: feedURL,
+		UserID: user.ID,
+	}
+
+	s.db.CreateFeed(ctx, params)
+
+	fmt.Printf("Added feed '%s' with URL '%s' for user '%s'\n", feedName, feedURL, user.Name)
+
+	return nil
+}
+
+func handlerListFeeds(s *state, cmd command) error {
+	ctx := context.Background()
+	feeds, err := s.db.GetAllFeeds(ctx)
+	if err != nil {
+		return fmt.Errorf("[GetAllFeeds]error: %v\n", err)
+	}
+
+	if len(feeds) == 0 {
+		fmt.Println("No feeds found.")
+		return nil
+	}
+
+	fmt.Println("Registered Feeds:")
+	for _, feed := range feeds {
+		user, err := s.db.GetUserByID(ctx, feed.UserID)
+		if err != nil {
+			return fmt.Errorf("error fetching user for feed: %v\n", err)
+		}
+		fmt.Printf("* %s (%s), User: %s\n", feed.Name, feed.Url, user.Name)
+	}
+	return nil
+}

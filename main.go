@@ -28,7 +28,6 @@ func main(){
 		fmt.Printf("Error connecting to database: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("PSQL = %s\n", cfg.DBURL)
 	defer db.Close()
 
 	dbQueries := database.New(db)
@@ -39,7 +38,10 @@ func main(){
 	cmds.Register("register", handlerRegister)
 	cmds.Register("reset", handlerReset)
 	cmds.Register("users", handlerListUsers)
-	
+	cmds.Register("agg", handlerAgg)
+	cmds.Register("addfeed", handlerAddFeed)
+	cmds.Register("feeds", handlerListFeeds)
+
 	args := os.Args[1:]
 	if len(args) < 1 {
 		fmt.Printf("usage: %s <command> [args...]\n", os.Args[0])
