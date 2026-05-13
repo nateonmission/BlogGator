@@ -176,3 +176,32 @@ func handlerListFeeds(s *state, cmd command) error {
 	}
 	return nil
 }
+
+func handlerFollow(s *state, cmd command) error {
+	user, err := s.db.GetUserByName(context.Background(), s.cfg.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("error fetching user: %v\n", err)
+	}
+
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("usage: follow <feed_id>\n")
+	}
+
+	feedURL, err := parseInt64(cmd.args[0])
+	if err != nil {
+		return fmt.Errorf("invalid feed URL: %v\n", err)
+	}
+
+	feed , err := s.db.GetFeedByURL(context.Background(), feedURL)
+
+	params := database.CreateFeedFollowParams{
+		FeedID: feed.ID,
+		UserID: user.ID,
+	}
+
+	s.db.CreateFeedFollow(context.Background(), params)
+
+	fmt.Printf("User '%s' is now following the '%s' feed\n", user.Name, feed.Name)
+
+	return nil
+}
